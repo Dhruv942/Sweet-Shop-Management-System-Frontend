@@ -1,10 +1,19 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import Home from './pages/Home'
 import UserLogin from './components/UserLogin'
+import Register from './auth/Register'
 
 function App() {
   return (
-    <div className="w-full min-h-screen">
-      <UserLogin />
-    </div>
+    <Router>
+      <div className="w-full min-h-screen">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<UserLogin />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </div>
+    </Router>
   )
 }
 

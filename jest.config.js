@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   moduleNameMapper: {
@@ -14,7 +14,9 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.(js|jsx)',
     '!src/main.jsx',
+    '!src/**/__tests__/**',
     '!src/**/*.test.(js|jsx)',
+    '!src/**/*.spec.(js|jsx)',
   ],
 };
 
