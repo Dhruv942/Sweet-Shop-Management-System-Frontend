@@ -21,13 +21,16 @@ function AdminLogin() {
       return;
     }
 
-    // API call for admin login
+    // API call for admin login (same endpoint as user login)
     try {
       const response = await authService.login(email, password);
       console.log("Admin login successful:", response);
 
+      // Dispatch custom event to notify Dashboard component
+      window.dispatchEvent(new Event("auth-change"));
+
       // Redirect to dashboard after successful login
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
 
       // Reset form
       setEmail("");

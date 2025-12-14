@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import AdminLogin from "../components/AdminLogin";
 import DashboardContent from "./DashboardContent";
 import { authService } from "../services/authService";
@@ -7,6 +7,7 @@ import { authService } from "../services/authService";
 function Dashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check if admin is already logged in
@@ -18,9 +19,21 @@ function Dashboard() {
 
     checkAuth();
 
-    // Check authentication status periodically
-    const interval = setInterval(checkAuth, 1000);
-    return () => clearInterval(interval);
+    // Listen for storage changes (when login happens)
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+
+    // Listen for storage events (from other tabs/windows)
+    window.addEventListener("storage", handleStorageChange);
+
+    // Custom event listener for same-tab storage changes
+    window.addEventListener("auth-change", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth-change", handleStorageChange);
+    };
   }, []);
 
   // Show loading state while checking

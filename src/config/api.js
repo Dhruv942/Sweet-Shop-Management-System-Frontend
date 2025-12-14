@@ -8,6 +8,14 @@ export const API_ENDPOINTS = {
     REGISTER: `${API_BASE_URL}/auth/register`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
   },
+  SWEETS: {
+    GET_ALL: `${API_BASE_URL}/sweets`,
+    SEARCH: `${API_BASE_URL}/sweets/search`,
+    CREATE: `${API_BASE_URL}/sweets`,
+    UPDATE: (id) => `${API_BASE_URL}/sweets/${id}`,
+    DELETE: (id) => `${API_BASE_URL}/sweets/${id}`,
+    RESTOCK: (id) => `${API_BASE_URL}/sweets/${id}/restock`,
+  },
 };
 
 export const BASE_URL = API_BASE_URL;
