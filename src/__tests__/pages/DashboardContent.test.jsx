@@ -127,28 +127,36 @@ describe("DashboardContent - Add Sweet", () => {
     const addButton = screen.getByRole("button", { name: /add new sweet/i });
     await user.click(addButton);
 
-    // Fill form
-    await user.type(screen.getByLabelText("Name"), "Jalebi");
-    await user.type(screen.getByLabelText("Category"), "Traditional");
-    await user.type(screen.getByLabelText("Price (₹)"), "60");
-    await user.type(screen.getByLabelText("Stock"), "50");
+    await user.type(screen.getByPlaceholderText("Sweet name"), "Jalebi");
+    await user.type(screen.getByPlaceholderText("Category"), "Traditional");
+    await user.type(screen.getByPlaceholderText("Price"), "60");
+    await user.type(screen.getByPlaceholderText("Stock quantity"), "50");
     await user.type(
-      screen.getByLabelText("Image URL"),
+      screen.getByPlaceholderText("Image URL"),
       "https://example.com/jalebi.jpg"
     );
 
-    // Submit form
     const submitButton = screen.getByRole("button", { name: /add sweet/i });
     await user.click(submitButton);
 
-    // Wait for modal to close
     await waitFor(() => {
-      expect(screen.queryByText("Add New Sweet")).not.toBeInTheDocument();
+      expect(sweetsService.createSweet).toHaveBeenCalledWith({
+        name: "Jalebi",
+        category: "Traditional",
+        price: "60",
+        stock: "50",
+        image: "https://example.com/jalebi.jpg",
+      });
     });
 
-    // Check that new sweet is in the list
+    await waitFor(() => {
+      expect(
+        screen.queryByPlaceholderText("Sweet name")
+      ).not.toBeInTheDocument();
+    });
+
     expect(screen.getByText("Jalebi")).toBeInTheDocument();
-    expect(screen.getByText("Traditional")).toBeInTheDocument();
+    expect(screen.getAllByText("Traditional").length).toBeGreaterThan(0);
 
     // Count sweets after adding
     const newSweets = screen.getAllByRole("row").length - 1;
@@ -267,7 +275,9 @@ describe("DashboardContent - Add Sweet", () => {
     await user.click(screen.getByRole("button", { name: /add sweet/i }));
 
     await waitFor(() => {
-      expect(screen.queryByPlaceholderText("Sweet name")).not.toBeInTheDocument();
+      expect(
+        screen.queryByPlaceholderText("Sweet name")
+      ).not.toBeInTheDocument();
     });
 
     await user.click(addButton);
@@ -280,7 +290,9 @@ describe("DashboardContent - Add Sweet", () => {
     await user.click(screen.getByRole("button", { name: /add sweet/i }));
 
     await waitFor(() => {
-      expect(screen.queryByPlaceholderText("Sweet name")).not.toBeInTheDocument();
+      expect(
+        screen.queryByPlaceholderText("Sweet name")
+      ).not.toBeInTheDocument();
     });
 
     expect(screen.getByText("Jalebi")).toBeInTheDocument();
