@@ -96,9 +96,25 @@ function DashboardContent() {
     setShowEditModal(true);
   };
 
-  const handleDeleteSweet = (id) => {
+  const handleDeleteSweet = async (id) => {
+    // Check if user is admin
+    const currentUser = authService.getCurrentUser();
+    if (!currentUser || currentUser.email !== "admin@example.com") {
+      setError("Only admin can delete sweets.");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this sweet?")) {
-      setSweets(sweets.filter((sweet) => sweet.id !== id));
+      setError("");
+      setLoading(true);
+      try {
+        await sweetsService.deleteSweet(id);
+        setSweets(sweets.filter((sweet) => sweet.id !== id));
+      } catch (err) {
+        setError(err.message || "Failed to delete sweet. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -115,7 +131,10 @@ function DashboardContent() {
 
     try {
       const newSweet = await sweetsService.createSweet(formData);
-      setSweets([...sweets, { ...newSweet, stock: newSweet.quantity || newSweet.stock }]);
+      setSweets([
+        ...sweets,
+        { ...newSweet, stock: newSweet.quantity || newSweet.stock },
+      ]);
       setShowAddModal(false);
       setFormData({ name: "", category: "", price: "", stock: "", image: "" });
     } catch (err) {
@@ -131,11 +150,17 @@ function DashboardContent() {
     setLoading(true);
 
     try {
-      const updatedSweet = await sweetsService.updateSweet(selectedSweet.id, formData);
+      const updatedSweet = await sweetsService.updateSweet(
+        selectedSweet.id,
+        formData
+      );
       // Normalize response: API might return 'quantity' instead of 'stock'
       const normalizedSweet = {
         ...updatedSweet,
-        stock: updatedSweet.quantity !== undefined ? updatedSweet.quantity : updatedSweet.stock,
+        stock:
+          updatedSweet.quantity !== undefined
+            ? updatedSweet.quantity
+            : updatedSweet.stock,
       };
       setSweets(
         sweets.map((sweet) =>
@@ -272,6 +297,22 @@ function DashboardContent() {
           </button>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-500/20 backdrop-blur-sm border border-red-400/50 text-red-200 px-4 py-3 rounded-xl text-sm text-center mb-4 animate-shake">
+            <div className="flex items-center justify-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              {error}
+            </div>
+          </div>
+        )}
+
         {/* Sweets Table */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
           <div className="overflow-x-auto">
@@ -301,64 +342,68 @@ function DashboardContent() {
               <tbody className="divide-y divide-white/10">
                 {fetchLoading ? (
                   <tr>
-                    <td colSpan="6" className="px-6 py-12 text-center text-gray-300">
+                    <td
+                      colSpan="6"
+                      className="px-6 py-12 text-center text-gray-300"
+                    >
                       Loading sweets...
                     </td>
                   </tr>
                 ) : (
                   filteredSweets.map((sweet) => (
-                  <tr
-                    key={sweet.id}
-                    className="hover:bg-white/5 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <img
-                        src={sweet.image}
-                        alt={sweet.name}
-                        className="w-16 h-16 object-cover rounded-lg"
-                        onError={(e) => {
-                          e.target.src =
-                            "https://via.placeholder.com/64?text=" + sweet.name;
-                        }}
-                      />
-                    </td>
-                    <td className="px-6 py-4 text-white font-semibold">
-                      {sweet.name}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm font-medium">
-                        {sweet.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-pink-400 font-bold">
-                      ₹{sweet.price}
-                    </td>
-                    <td className="px-6 py-4 text-indigo-400 font-semibold">
-                      {sweet.stock}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEditSweet(sweet)}
-                          className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-all text-sm font-medium"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleRestock(sweet)}
-                          className="px-3 py-1 bg-green-500/20 text-green-300 rounded-lg hover:bg-green-500/30 transition-all text-sm font-medium"
-                        >
-                          Restock
-                        </button>
-                        <button
-                          onClick={() => handleDeleteSweet(sweet.id)}
-                          className="px-3 py-1 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-all text-sm font-medium"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                    <tr
+                      key={sweet.id}
+                      className="hover:bg-white/5 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <img
+                          src={sweet.image}
+                          alt={sweet.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.src =
+                              "https://via.placeholder.com/64?text=" +
+                              sweet.name;
+                          }}
+                        />
+                      </td>
+                      <td className="px-6 py-4 text-white font-semibold">
+                        {sweet.name}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="px-3 py-1 bg-purple-500/20 text-purple-300 rounded-full text-sm font-medium">
+                          {sweet.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-pink-400 font-bold">
+                        ₹{sweet.price}
+                      </td>
+                      <td className="px-6 py-4 text-indigo-400 font-semibold">
+                        {sweet.stock}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditSweet(sweet)}
+                            className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30 transition-all text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleRestock(sweet)}
+                            className="px-3 py-1 bg-green-500/20 text-green-300 rounded-lg hover:bg-green-500/30 transition-all text-sm font-medium"
+                          >
+                            Restock
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSweet(sweet.id)}
+                            className="px-3 py-1 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 transition-all text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   ))
                 )}
               </tbody>
@@ -578,9 +623,24 @@ function DashboardContent() {
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                         Updating...
                       </span>

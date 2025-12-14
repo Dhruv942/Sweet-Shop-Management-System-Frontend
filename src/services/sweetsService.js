@@ -70,8 +70,15 @@ export const sweetsService = {
    * @returns {Promise<void>}
    */
   async deleteSweet(id) {
-    // TODO: API integration
-    return;
+    try {
+      const endpoint = API_ENDPOINTS.SWEETS.DELETE(id).replace(BASE_URL, "");
+      await apiService.delete(endpoint);
+      return;
+    } catch (error) {
+      throw new Error(
+        error.message || "Failed to delete sweet. Please try again."
+      );
+    }
   },
 
   /**

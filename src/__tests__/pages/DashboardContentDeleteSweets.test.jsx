@@ -150,4 +150,29 @@ describe("DashboardContent - Delete Sweet", () => {
       expect(sweetsService.deleteSweet).toHaveBeenCalled();
     });
   });
+
+  test("shows error when non-admin user tries to delete sweet", async () => {
+    const user = userEvent.setup();
+    // Set non-admin email
+    authService.getCurrentUser.mockReturnValue({
+      email: "user@example.com",
+      role: "user",
+    });
+
+    renderWithRouter(<DashboardContent />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Gulab Jamun")).toBeInTheDocument();
+    });
+
+    const deleteButtons = screen.getAllByRole("button", { name: /delete/i });
+    await user.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Only admin can delete sweets.")
+      ).toBeInTheDocument();
+      expect(sweetsService.deleteSweet).not.toHaveBeenCalled();
+    });
+  });
 });
