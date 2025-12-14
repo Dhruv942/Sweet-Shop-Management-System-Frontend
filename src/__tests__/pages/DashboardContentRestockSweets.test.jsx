@@ -126,18 +126,25 @@ describe("DashboardContent - Restock Sweet", () => {
       expect(screen.getByText("Gulab Jamun")).toBeInTheDocument();
     });
 
-    const restockButtons = screen.getAllByRole("button", { name: /restock/i });
-    await user.click(restockButtons[0]);
-
-    const quantityInput = screen.getByPlaceholderText("Quantity to add");
-    await user.type(quantityInput, "50");
-
-    const submitButton = screen.getByRole("button", { name: /restock/i, type: "submit" });
-    await user.click(submitButton);
+    const tableRestockButtons = screen.getAllByRole("button", { name: /restock/i });
+    await user.click(tableRestockButtons[0]);
 
     await waitFor(() => {
-      expect(sweetsService.restockSweet).toHaveBeenCalledWith(1, 50);
+      expect(screen.getByText(/restock gulab jamun/i)).toBeInTheDocument();
     });
+
+    const quantityInput = screen.getByPlaceholderText("Quantity to add");
+    await user.clear(quantityInput);
+    await user.type(quantityInput, "50");
+
+    // Find the form and submit it
+    const form = quantityInput.closest('form');
+    expect(form).toBeDefined();
+    await userEvent.click(form.querySelector('button[type="submit"]'));
+
+    await waitFor(() => {
+      expect(sweetsService.restockSweet).toHaveBeenCalledWith(1, "50");
+    }, { timeout: 3000 });
   });
 
   test("updates sweet stock after successful restock", async () => {
@@ -161,23 +168,33 @@ describe("DashboardContent - Restock Sweet", () => {
       expect(screen.getByText("100")).toBeInTheDocument(); // Initial stock
     });
 
-    const restockButtons = screen.getAllByRole("button", { name: /restock/i });
-    await user.click(restockButtons[0]);
-
-    const quantityInput = screen.getByPlaceholderText("Quantity to add");
-    await user.type(quantityInput, "50");
-
-    const submitButton = screen.getByRole("button", { name: /restock/i, type: "submit" });
-    await user.click(submitButton);
+    const tableRestockButtons = screen.getAllByRole("button", { name: /restock/i });
+    await user.click(tableRestockButtons[0]);
 
     await waitFor(() => {
-      expect(sweetsService.restockSweet).toHaveBeenCalledWith(1, 50);
-      // Modal should close
-      expect(screen.queryByText(/restock gulab jamun/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/restock gulab jamun/i)).toBeInTheDocument();
     });
 
-    // Stock should be updated (assuming API integration updates the state)
-    // This test will need to be updated once API integration is complete
+    const quantityInput = screen.getByPlaceholderText("Quantity to add");
+    await user.clear(quantityInput);
+    await user.type(quantityInput, "50");
+
+    // Find the form and submit it
+    const form = quantityInput.closest('form');
+    expect(form).toBeDefined();
+    await userEvent.click(form.querySelector('button[type="submit"]'));
+
+    await waitFor(() => {
+      expect(sweetsService.restockSweet).toHaveBeenCalledWith(1, "50");
+      // Modal should close
+      expect(screen.queryByText(/restock gulab jamun/i)).not.toBeInTheDocument();
+    }, { timeout: 3000 });
+
+    // Stock should be updated - verify the sweet is updated in the table
+    await waitFor(() => {
+      // The stock should be updated to 150
+      expect(screen.getByText("150")).toBeInTheDocument();
+    });
   });
 
   test("closes restock modal when Cancel button is clicked", async () => {

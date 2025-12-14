@@ -88,8 +88,15 @@ export const sweetsService = {
    * @returns {Promise<object>}
    */
   async restockSweet(id, quantity) {
-    // TODO: API integration
-    return { id, quantity };
+    try {
+      const endpoint = API_ENDPOINTS.SWEETS.RESTOCK(id).replace(BASE_URL, "");
+      const response = await apiService.post(endpoint, { quantity: parseInt(quantity) });
+      return response;
+    } catch (error) {
+      throw new Error(
+        error.message || "Failed to restock sweet. Please try again."
+      );
+    }
   },
 };
 
