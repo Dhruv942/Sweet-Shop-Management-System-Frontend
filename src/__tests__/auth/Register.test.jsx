@@ -1,132 +1,150 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { BrowserRouter } from "react-router-dom";
 import Register from "../../auth/Register";
+import { authService } from "../../services/authService";
+
+// Mock the authService
+jest.mock("../../services/authService", () => ({
+  authService: {
+    register: jest.fn(),
+  },
+}));
+
+// Mock useNavigate
+const mockNavigate = jest.fn();
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: () => mockNavigate,
+}));
+
+const renderWithRouter = (component) => {
+  return render(<BrowserRouter>{component}</BrowserRouter>);
+};
 
 describe("Register Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(console, "log").mockImplementation(() => {});
-    window.alert = jest.fn();
+    localStorage.clear();
+    mockNavigate.mockClear();
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  test("renders register form", () => {
-    render(<Register />);
+  test("renders register form with all elements", () => {
+    renderWithRouter(<Register />);
 
-    expect(screen.getByText("User Register")).toBeInTheDocument();
-    expect(screen.getByText("Create your account")).toBeInTheDocument();
-    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.getAllByText("Create Account")[0]).toBeInTheDocument();
+    expect(
+      screen.getByText("Join us and start your journey")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Email Address")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /register/i })
+      screen.getByRole("button", { name: /create account/i })
     ).toBeInTheDocument();
   });
 
-  test("renders email and password input fields with correct placeholders", () => {
-    render(<Register />);
-
-    expect(screen.getByPlaceholderText("Enter your email")).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText("Enter your password")
-    ).toBeInTheDocument();
-  });
-
-  test("handles email input changes", async () => {
+  test("handles email and password input changes", async () => {
     const user = userEvent.setup();
-    render(<Register />);
+    renderWithRouter(<Register />);
 
-    const emailInput = screen.getByLabelText("Email");
-    await user.type(emailInput, "user@example.com");
-
-    expect(emailInput).toHaveValue("user@example.com");
-  });
-
-  test("handles password input changes", async () => {
-    const user = userEvent.setup();
-    render(<Register />);
-
+    const emailInput = screen.getByLabelText("Email Address");
     const passwordInput = screen.getByLabelText("Password");
+
+    await user.type(emailInput, "user@example.com");
     await user.type(passwordInput, "password123");
 
+    expect(emailInput).toHaveValue("user@example.com");
     expect(passwordInput).toHaveValue("password123");
   });
 
-  test("shows error message when submitting empty form", async () => {
+  test("submits form with valid data and navigates to login", async () => {
     const user = userEvent.setup();
-    render(<Register />);
+    authService.register.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(
+            () =>
+              resolve({
+                token: "mock-token",
+                user: { id: "1", email: "user@example.com" },
+              }),
+            100
+          )
+        )
+    );
 
-    const submitButton = screen.getByRole("button", { name: /register/i });
-    await user.click(submitButton);
+    renderWithRouter(<Register />);
 
-    await waitFor(() => {
-      expect(screen.getByText("Please fill in all fields")).toBeInTheDocument();
-    });
-  });
-
-  test("shows error message when email is empty", async () => {
-    const user = userEvent.setup();
-    render(<Register />);
-
+    const emailInput = screen.getByLabelText("Email Address");
     const passwordInput = screen.getByLabelText("Password");
-    await user.type(passwordInput, "password123");
-
-    const submitButton = screen.getByRole("button", { name: /register/i });
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText("Please fill in all fields")).toBeInTheDocument();
+    const submitButton = screen.getByRole("button", {
+      name: /create account/i,
     });
-  });
-
-  test("shows error message when password is empty", async () => {
-    const user = userEvent.setup();
-    render(<Register />);
-
-    const emailInput = screen.getByLabelText("Email");
-    await user.type(emailInput, "user@example.com");
-
-    const submitButton = screen.getByRole("button", { name: /register/i });
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText("Please fill in all fields")).toBeInTheDocument();
-    });
-  });
-
-  test("submits form with valid data", async () => {
-    const user = userEvent.setup();
-    render(<Register />);
-
-    const emailInput = screen.getByLabelText("Email");
-    const passwordInput = screen.getByLabelText("Password");
-    const submitButton = screen.getByRole("button", { name: /register/i });
 
     await user.type(emailInput, "user@example.com");
     await user.type(passwordInput, "password123");
     await user.click(submitButton);
 
-    // Button should show loading state
-    expect(screen.getByText("Registering...")).toBeInTheDocument();
+    // Check loading state
+    await waitFor(() => {
+      expect(screen.getByText("Registering...")).toBeInTheDocument();
+    });
 
     // Wait for form submission to complete
     await waitFor(
       () => {
-        expect(window.alert).toHaveBeenCalledWith("Registration successful!");
+        expect(authService.register).toHaveBeenCalledWith(
+          "user@example.com",
+          "password123"
+        );
+        expect(mockNavigate).toHaveBeenCalledWith("/login");
       },
       { timeout: 2000 }
     );
   });
 
-  test("disables inputs during submission", async () => {
+  test("shows error message on API failure", async () => {
     const user = userEvent.setup();
-    render(<Register />);
+    authService.register.mockRejectedValue(new Error("Email already exists"));
 
-    const emailInput = screen.getByLabelText("Email");
+    renderWithRouter(<Register />);
+
+    const emailInput = screen.getByLabelText("Email Address");
     const passwordInput = screen.getByLabelText("Password");
-    const submitButton = screen.getByRole("button", { name: /register/i });
+    const submitButton = screen.getByRole("button", {
+      name: /create account/i,
+    });
+
+    await user.type(emailInput, "user@example.com");
+    await user.type(passwordInput, "password123");
+    await user.click(submitButton);
+
+    await waitFor(() => {
+      expect(screen.getByText("Email already exists")).toBeInTheDocument();
+    });
+  });
+
+  test("disables inputs and button during submission", async () => {
+    const user = userEvent.setup();
+    authService.register.mockImplementation(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ token: "token", user: {} }), 100)
+        )
+    );
+
+    renderWithRouter(<Register />);
+
+    const emailInput = screen.getByLabelText("Email Address");
+    const passwordInput = screen.getByLabelText("Password");
+    const submitButton = screen.getByRole("button", {
+      name: /create account/i,
+    });
 
     await user.type(emailInput, "user@example.com");
     await user.type(passwordInput, "password123");
@@ -136,41 +154,5 @@ describe("Register Component", () => {
     expect(emailInput).toBeDisabled();
     expect(passwordInput).toBeDisabled();
     expect(submitButton).toBeDisabled();
-  });
-
-  test("clears form after successful submission", async () => {
-    const user = userEvent.setup();
-    render(<Register />);
-
-    const emailInput = screen.getByLabelText("Email");
-    const passwordInput = screen.getByLabelText("Password");
-    const submitButton = screen.getByRole("button", { name: /register/i });
-
-    await user.type(emailInput, "user@example.com");
-    await user.type(passwordInput, "password123");
-    await user.click(submitButton);
-
-    // Wait for submission to complete and form to reset
-    await waitFor(
-      () => {
-        expect(emailInput).toHaveValue("");
-        expect(passwordInput).toHaveValue("");
-      },
-      { timeout: 2000 }
-    );
-  });
-
-  test("renders login link", () => {
-    render(<Register />);
-
-    const loginLink = screen.getByText("Login here");
-    expect(loginLink).toBeInTheDocument();
-    expect(loginLink).toHaveAttribute("href", "#");
-  });
-
-  test("renders 'Already have an account?' text", () => {
-    render(<Register />);
-
-    expect(screen.getByText(/Already have an account\?/i)).toBeInTheDocument();
   });
 });

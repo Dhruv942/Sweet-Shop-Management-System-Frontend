@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { authService } from '../services/authService'
 
 function UserLogin() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -18,17 +21,19 @@ function UserLogin() {
       return
     }
 
-    // Simulate API call
+    // API call
     try {
-      // Replace with actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      console.log('User login:', { email, password })
-      alert('User login successful!')
+      const response = await authService.login(email, password)
+      console.log('Login successful:', response)
+      
+      // Redirect to home or dashboard after successful login
+      navigate('/')
+      
       // Reset form
       setEmail('')
       setPassword('')
     } catch (err) {
-      setError('Login failed. Please try again.')
+      setError(err.message || 'Login failed. Please check your credentials and try again.')
     } finally {
       setLoading(false)
     }

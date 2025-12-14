@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { authService } from "../services/authService";
 
 function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,17 +21,19 @@ function Register() {
       return;
     }
 
-    // Simulate API call
+    // API call
     try {
-      // Replace with actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log("User registration:", { email, password });
-      alert("Registration successful!");
+      const response = await authService.register(email, password);
+      console.log("Registration successful:", response);
+
+      // Redirect to home or login after successful registration
+      navigate("/login");
+
       // Reset form
       setEmail("");
       setPassword("");
     } catch (err) {
-      setError("Registration failed. Please try again.");
+      setError(err.message || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }

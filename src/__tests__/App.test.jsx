@@ -2,11 +2,11 @@ import { render, screen } from "@testing-library/react";
 import App from "../App";
 
 describe("App Component", () => {
-  test("renders user login component", () => {
+  test("renders home page by default", () => {
     render(<App />);
 
-    expect(screen.getByText("User Login")).toBeInTheDocument();
-    expect(screen.getByLabelText("Email")).toBeInTheDocument();
-    expect(screen.getByLabelText("Password")).toBeInTheDocument();
+    expect(screen.getByText("Welcome to Sweet Shop")).toBeInTheDocument();
+    expect(screen.getAllByText("Sign In")[0]).toBeInTheDocument();
+    expect(screen.getByText("Register")).toBeInTheDocument();
   });
 });
