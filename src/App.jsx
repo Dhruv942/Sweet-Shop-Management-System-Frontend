@@ -1,9 +1,8 @@
 import UserLogin from './components/UserLogin'
-import './App.css'
 
 function App() {
   return (
-    <div className="app">
+    <div className="w-full min-h-screen">
       <UserLogin />
     </div>
   )

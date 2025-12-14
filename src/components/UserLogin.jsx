@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import './Login.css'
 
 function UserLogin() {
   const [email, setEmail] = useState('')
@@ -36,16 +35,26 @@ function UserLogin() {
   }
 
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h1 className="login-title">User Login</h1>
-        <p className="login-subtitle">Sign in to your account</p>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
+      <div className="w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <h1 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+          User Login
+        </h1>
+        <p className="text-gray-600 text-center mb-8 text-sm">
+          Sign in to your account
+        </p>
         
-        <form onSubmit={handleSubmit} className="login-form">
-          {error && <div className="error-message">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center">
+              {error}
+            </div>
+          )}
           
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-semibold text-gray-700">
+              Email
+            </label>
             <input
               id="email"
               type="email"
@@ -54,11 +63,14 @@ function UserLogin() {
               placeholder="Enter your email"
               required
               disabled={loading}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
+              Password
+            </label>
             <input
               id="password"
               type="password"
@@ -67,20 +79,23 @@ function UserLogin() {
               placeholder="Enter your password"
               required
               disabled={loading}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-purple-600 focus:ring-4 focus:ring-purple-100 transition-all disabled:bg-gray-100 disabled:cursor-not-allowed"
             />
           </div>
 
           <button 
             type="submit" 
-            className="login-button"
             disabled={loading}
+            className="w-full py-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
-        <div className="login-footer">
-          <a href="#" className="forgot-password">Forgot password?</a>
+        <div className="mt-6 text-center">
+          <a href="#" className="text-purple-600 hover:text-pink-500 text-sm font-medium transition-colors">
+            Forgot password?
+          </a>
         </div>
       </div>
     </div>
