@@ -125,22 +125,31 @@ function DashboardContent() {
     }
   };
 
-  const handleSubmitEdit = (e) => {
+  const handleSubmitEdit = async (e) => {
     e.preventDefault();
-    setSweets(
-      sweets.map((sweet) =>
-        sweet.id === selectedSweet.id
-          ? {
-              ...sweet,
-              ...formData,
-              price: parseInt(formData.price),
-              stock: parseInt(formData.stock),
-            }
-          : sweet
-      )
-    );
-    setShowEditModal(false);
-    setSelectedSweet(null);
+    setError("");
+    setLoading(true);
+
+    try {
+      const updatedSweet = await sweetsService.updateSweet(selectedSweet.id, formData);
+      // Normalize response: API might return 'quantity' instead of 'stock'
+      const normalizedSweet = {
+        ...updatedSweet,
+        stock: updatedSweet.quantity !== undefined ? updatedSweet.quantity : updatedSweet.stock,
+      };
+      setSweets(
+        sweets.map((sweet) =>
+          sweet.id === selectedSweet.id ? normalizedSweet : sweet
+        )
+      );
+      setShowEditModal(false);
+      setSelectedSweet(null);
+      setFormData({ name: "", category: "", price: "", stock: "", image: "" });
+    } catch (err) {
+      setError(err.message || "Failed to update sweet. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmitRestock = (e) => {
@@ -482,6 +491,11 @@ function DashboardContent() {
             <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-2xl border border-white/20 max-w-md w-full">
               <h2 className="text-3xl font-bold text-white mb-6">Edit Sweet</h2>
               <form onSubmit={handleSubmitEdit} className="space-y-4">
+                {error && (
+                  <div className="bg-red-500/20 backdrop-blur-sm border border-red-400/50 text-red-200 px-4 py-3 rounded-xl text-sm text-center">
+                    {error}
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-bold text-gray-200 mb-2">
                     Name
@@ -507,7 +521,8 @@ function DashboardContent() {
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 disabled:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -522,7 +537,8 @@ function DashboardContent() {
                     onChange={(e) =>
                       setFormData({ ...formData, price: e.target.value })
                     }
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 disabled:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -537,7 +553,8 @@ function DashboardContent() {
                     onChange={(e) =>
                       setFormData({ ...formData, stock: e.target.value })
                     }
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                    disabled={loading}
+                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 disabled:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
                 <div>
@@ -556,14 +573,26 @@ function DashboardContent() {
                 <div className="flex gap-4 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl hover:shadow-lg transition-all"
+                    disabled={loading}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Update Sweet
+                    {loading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Updating...
+                      </span>
+                    ) : (
+                      "Update Sweet"
+                    )}
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowEditModal(false)}
-                    className="flex-1 px-6 py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-all border border-white/20"
+                    disabled={loading}
+                    className="flex-1 px-6 py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-all border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>

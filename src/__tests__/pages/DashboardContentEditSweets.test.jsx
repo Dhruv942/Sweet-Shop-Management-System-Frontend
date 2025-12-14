@@ -60,10 +60,10 @@ describe("DashboardContent - Edit Sweet", () => {
     await user.click(editButton);
 
     expect(screen.getByText("Edit Sweet")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Sweet name")).toHaveValue("Gulab Jamun");
-    expect(screen.getByPlaceholderText("Category")).toHaveValue("Traditional");
-    expect(screen.getByPlaceholderText("Price")).toHaveValue(50);
-    expect(screen.getByPlaceholderText("Stock quantity")).toHaveValue(100);
+    expect(screen.getByDisplayValue("Gulab Jamun")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Traditional")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("50")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("100")).toBeInTheDocument();
   });
 
   test("calls updateSweet API and updates the sweet when form is submitted", async () => {
@@ -93,19 +93,19 @@ describe("DashboardContent - Edit Sweet", () => {
       expect(screen.getByText("Edit Sweet")).toBeInTheDocument();
     });
 
-    const nameInput = screen.getByPlaceholderText("Sweet name");
+    const nameInput = screen.getByDisplayValue("Gulab Jamun");
     await user.clear(nameInput);
     await user.type(nameInput, "Gulab Jamun Updated");
 
-    const categoryInput = screen.getByPlaceholderText("Category");
+    const categoryInput = screen.getByDisplayValue("Traditional");
     await user.clear(categoryInput);
     await user.type(categoryInput, "Premium");
 
-    const priceInput = screen.getByPlaceholderText("Price");
+    const priceInput = screen.getByDisplayValue("50");
     await user.clear(priceInput);
     await user.type(priceInput, "60");
 
-    const stockInput = screen.getByPlaceholderText("Stock quantity");
+    const stockInput = screen.getByDisplayValue("100");
     await user.clear(stockInput);
     await user.type(stockInput, "120");
 
@@ -121,6 +121,14 @@ describe("DashboardContent - Edit Sweet", () => {
         image: "https://example.com/gulab-jamun.jpg",
       });
     });
+
+    // Wait for modal to close
+    await waitFor(() => {
+      expect(screen.queryByText("Edit Sweet")).not.toBeInTheDocument();
+    });
+
+    // Verify the sweet is updated in the table
+    expect(screen.getByText("Gulab Jamun Updated")).toBeInTheDocument();
   });
 });
 

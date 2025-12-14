@@ -45,15 +45,23 @@ export const sweetsService = {
     }
   },
 
-  /**
-   * Update sweet
-   * @param {string} id - Sweet ID
-   * @param {object} sweetData - Updated sweet data
-   * @returns {Promise<object>}
-   */
   async updateSweet(id, sweetData) {
-    // TODO: API integration
-    return { id, ...sweetData };
+    try {
+      const endpoint = API_ENDPOINTS.SWEETS.UPDATE(id).replace(BASE_URL, "");
+      const payload = {
+        name: sweetData.name,
+        category: sweetData.category,
+        price: parseInt(sweetData.price),
+        quantity: parseInt(sweetData.stock || sweetData.quantity),
+        image: sweetData.image || "",
+      };
+      const response = await apiService.put(endpoint, payload);
+      return response;
+    } catch (error) {
+      throw new Error(
+        error.message || "Failed to update sweet. Please try again."
+      );
+    }
   },
 
   /**
