@@ -100,6 +100,23 @@ export const sweetsService = {
       );
     }
   },
+
+  /**
+   * Purchase sweet
+   * @param {string} id - Sweet ID
+   * @returns {Promise<object>}
+   */
+  async purchaseSweet(id) {
+    try {
+      const endpoint = API_ENDPOINTS.SWEETS.PURCHASE(id).replace(BASE_URL, "");
+      const response = await apiService.post(endpoint, {});
+      return response;
+    } catch (error) {
+      throw new Error(
+        error.message || "Failed to purchase sweet. Please try again."
+      );
+    }
+  },
 };
 
 export default sweetsService;

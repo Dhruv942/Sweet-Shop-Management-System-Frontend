@@ -1,74 +1,59 @@
-import React from "react";
-
-// Dummy sweets data
-const dummySweets = [
-  {
-    id: 1,
-    name: "Gulab Jamun",
-    category: "Traditional",
-    price: 50,
-    image:
-      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=300&fit=crop",
-  },
-  {
-    id: 2,
-    name: "Rasgulla",
-    category: "Traditional",
-    price: 45,
-    image:
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop",
-  },
-  {
-    id: 3,
-    name: "Kaju Katli",
-    category: "Dry Fruits",
-    price: 120,
-    image:
-      "https://images.unsplash.com/photo-1603532648955-039310d9ed75?w=400&h=300&fit=crop",
-  },
-  {
-    id: 4,
-    name: "Jalebi",
-    category: "Traditional",
-    price: 60,
-    image:
-      "https://images.unsplash.com/photo-1606312619070-d48b4bc98b14?w=400&h=300&fit=crop",
-  },
-  {
-    id: 5,
-    name: "Ladoo",
-    category: "Traditional",
-    price: 55,
-    image:
-      "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?w=400&h=300&fit=crop",
-  },
-  {
-    id: 6,
-    name: "Barfi",
-    category: "Milk",
-    price: 70,
-    image:
-      "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop",
-  },
-  {
-    id: 7,
-    name: "Halwa",
-    category: "Traditional",
-    price: 65,
-    image:
-      "https://images.unsplash.com/photo-1603532648955-039310d9ed75?w=400&h=300&fit=crop",
-  },
-  {
-    id: 8,
-    name: "Peda",
-    category: "Milk",
-    price: 80,
-    image:
-      "https://images.unsplash.com/photo-1606312619070-d48b4bc98b14?w=400&h=300&fit=crop",
-  },
-];
+import React, { useState, useEffect } from "react";
+import { sweetsService } from "../services/sweetsService";
 
 function Shop() {
+  const [sweets, setSweets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    fetchSweets();
+  }, []);
+
+  const fetchSweets = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const fetchedSweets = await sweetsService.getAllSweets();
+      const normalizedSweets = fetchedSweets.map((sweet) => ({
+        ...sweet,
+        stock: sweet.quantity !== undefined ? sweet.quantity : sweet.stock,
+      }));
+      setSweets(normalizedSweets);
+    } catch (err) {
+      setError(err.message || "Failed to fetch sweets. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePurchase = async (id) => {
+    setError("");
+    setSuccessMessage("");
+    try {
+      const purchasedSweet = await sweetsService.purchaseSweet(id);
+      const normalizedSweet = {
+        ...purchasedSweet,
+        stock:
+          purchasedSweet.quantity !== undefined
+            ? purchasedSweet.quantity
+            : purchasedSweet.stock,
+      };
+      setSweets(
+        sweets.map((sweet) =>
+          sweet.id === id ? normalizedSweet : sweet
+        )
+      );
+      setSuccessMessage("Purchase successful! Thank you for your order.");
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+    } catch (err) {
+      setError(err.message || "Failed to purchase sweet. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
       {/* Animated background blobs */}
@@ -87,48 +72,116 @@ function Shop() {
           </p>
         </div>
 
-        {/* Sweets Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {dummySweets.map((sweet) => (
-            <div
-              key={sweet.id}
-              className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/20 hover:scale-105 transition-all duration-300 hover:shadow-purple-500/50"
-            >
-              {/* Image */}
-              <div className="relative w-full h-48 mb-4 rounded-xl overflow-hidden">
-                <img
-                  src={sweet.image}
-                  alt={sweet.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src =
-                      "https://via.placeholder.com/400x300?text=" + sweet.name;
-                  }}
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-6 bg-green-500/20 backdrop-blur-sm border border-green-400/50 text-green-200 px-4 py-3 rounded-xl text-center animate-shake">
+            <div className="flex items-center justify-center gap-2">
+              <svg
+                className="w-5 h-5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
                 />
-                <div className="absolute top-2 right-2 bg-purple-500/90 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs font-bold">
-                  {sweet.category}
-                </div>
-              </div>
-
-              {/* Details */}
-              <div className="space-y-2">
-                <h3 className="text-xl font-bold text-white">{sweet.name}</h3>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-300 text-sm">Category:</span>
-                  <span className="text-purple-300 font-semibold">
-                    {sweet.category}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between pt-2 border-t border-white/20">
-                  <span className="text-gray-300 text-sm">Price:</span>
-                  <span className="text-2xl font-bold text-pink-400">
-                    ₹{sweet.price}
-                  </span>
-                </div>
-              </div>
+              </svg>
+              {successMessage}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-500/20 backdrop-blur-sm border border-red-400/50 text-red-200 px-4 py-3 rounded-xl text-center animate-shake">
+            <div className="flex items-center justify-center gap-2">
+              <svg
+                className="w-5 h-5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              {error}
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="text-purple-300 text-xl">Loading sweets...</div>
+          </div>
+        )}
+
+        {/* Sweets Grid */}
+        {!loading && sweets.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {sweets.map((sweet) => (
+              <div
+                key={sweet.id}
+                className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-2xl border border-white/20 hover:scale-105 transition-all duration-300 hover:shadow-purple-500/50"
+              >
+                {/* Image */}
+                <div className="relative w-full h-48 mb-4 rounded-xl overflow-hidden">
+                  <img
+                    src={sweet.image}
+                    alt={sweet.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src =
+                        "https://via.placeholder.com/400x300?text=" + sweet.name;
+                    }}
+                  />
+                  <div className="absolute top-2 right-2 bg-purple-500/90 backdrop-blur-sm px-3 py-1 rounded-full text-white text-xs font-bold">
+                    {sweet.category}
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold text-white">{sweet.name}</h3>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 text-sm">Category:</span>
+                    <span className="text-purple-300 font-semibold">
+                      {sweet.category}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-300 text-sm">Stock:</span>
+                    <span className="text-indigo-300 font-semibold">
+                      {sweet.stock || 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-white/20">
+                    <span className="text-gray-300 text-sm">Price:</span>
+                    <span className="text-2xl font-bold text-pink-400">
+                      ₹{sweet.price}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => handlePurchase(sweet.id)}
+                    className="w-full mt-4 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  >
+                    Buy Now
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && sweets.length === 0 && !error && (
+          <div className="text-center py-12">
+            <p className="text-gray-300 text-xl">No sweets available at the moment.</p>
+          </div>
+        )}
       </div>
     </div>
   );
