@@ -23,14 +23,23 @@ export const sweetsService = {
     return [];
   },
 
-  /**
-   * Create new sweet
-   * @param {object} sweetData - Sweet data (name, category, price, image, stock)
-   * @returns {Promise<object>}
-   */
   async createSweet(sweetData) {
-    // TODO: API integration
-    return sweetData;
+    try {
+      const endpoint = API_ENDPOINTS.SWEETS.CREATE.replace(BASE_URL, "");
+      const payload = {
+        name: sweetData.name,
+        category: sweetData.category,
+        price: parseInt(sweetData.price),
+        quantity: parseInt(sweetData.stock || sweetData.quantity),
+        image: sweetData.image || "",
+      };
+      const response = await apiService.post(endpoint, payload);
+      return response;
+    } catch (error) {
+      throw new Error(
+        error.message || "Failed to create sweet. Please try again."
+      );
+    }
   },
 
   /**

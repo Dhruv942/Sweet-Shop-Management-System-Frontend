@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { authService } from "../services/authService";
 import { useNavigate } from "react-router-dom";
+import { sweetsService } from "../services/sweetsService";
 
 // Dummy sweets data for design
 const dummySweets = [
@@ -41,6 +42,8 @@ function DashboardContent() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRestockModal, setShowRestockModal] = useState(false);
   const [selectedSweet, setSelectedSweet] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -83,17 +86,21 @@ function DashboardContent() {
     setShowRestockModal(true);
   };
 
-  const handleSubmitAdd = (e) => {
+  const handleSubmitAdd = async (e) => {
     e.preventDefault();
-    const newSweet = {
-      id: sweets.length + 1,
-      ...formData,
-      price: parseInt(formData.price),
-      stock: parseInt(formData.stock),
-    };
-    setSweets([...sweets, newSweet]);
-    setShowAddModal(false);
-    setFormData({ name: "", category: "", price: "", stock: "", image: "" });
+    setError("");
+    setLoading(true);
+
+    try {
+      const newSweet = await sweetsService.createSweet(formData);
+      setSweets([...sweets, { ...newSweet, stock: newSweet.quantity || newSweet.stock }]);
+      setShowAddModal(false);
+      setFormData({ name: "", category: "", price: "", stock: "", image: "" });
+    } catch (err) {
+      setError(err.message || "Failed to create sweet. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmitEdit = (e) => {
@@ -333,6 +340,11 @@ function DashboardContent() {
                 Add New Sweet
               </h2>
               <form onSubmit={handleSubmitAdd} className="space-y-4">
+                {error && (
+                  <div className="bg-red-500/20 backdrop-blur-sm border border-red-400/50 text-red-200 px-4 py-3 rounded-xl text-sm text-center">
+                    {error}
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-bold text-gray-200 mb-2">
                     Name
@@ -412,14 +424,19 @@ function DashboardContent() {
                 <div className="flex gap-4 pt-4">
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl hover:shadow-lg transition-all"
+                    disabled={loading}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Add Sweet
+                    {loading ? "Adding..." : "Add Sweet"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="flex-1 px-6 py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-all border border-white/20"
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setError("");
+                    }}
+                    disabled={loading}
+                    className="flex-1 px-6 py-3 bg-white/10 text-white font-bold rounded-xl hover:bg-white/20 transition-all border border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>

@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import DashboardContent from "../../pages/DashboardContent";
 import { authService } from "../../services/authService";
+import { sweetsService } from "../../services/sweetsService";
 
-// Mock the authService
 jest.mock("../../services/authService", () => ({
   authService: {
     logout: jest.fn(),
@@ -13,7 +13,12 @@ jest.mock("../../services/authService", () => ({
   },
 }));
 
-// Mock useNavigate
+jest.mock("../../services/sweetsService", () => ({
+  sweetsService: {
+    createSweet: jest.fn(),
+  },
+}));
+
 const mockNavigate = jest.fn();
 jest.mock("react-router-dom", () => ({
   ...jest.requireActual("react-router-dom"),
@@ -28,13 +33,24 @@ describe("DashboardContent - Add Sweet", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockNavigate.mockClear();
+    sweetsService.createSweet.mockResolvedValue({
+      id: 4,
+      name: "Jalebi",
+      category: "Traditional",
+      price: 60,
+      quantity: 50,
+      stock: 50,
+      image: "https://example.com/jalebi.jpg",
+    });
   });
 
   test("renders dashboard with Add New Sweet button", () => {
     renderWithRouter(<DashboardContent />);
 
     expect(screen.getByText("Admin Dashboard")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add new sweet/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /add new sweet/i })
+    ).toBeInTheDocument();
   });
 
   test("opens add sweet modal when Add New Sweet button is clicked", async () => {
@@ -44,28 +60,26 @@ describe("DashboardContent - Add Sweet", () => {
     const addButton = screen.getByRole("button", { name: /add new sweet/i });
     await user.click(addButton);
 
-    expect(screen.getByText("Add New Sweet")).toBeInTheDocument();
-    expect(screen.getByLabelText("Name")).toBeInTheDocument();
-    expect(screen.getByLabelText("Category")).toBeInTheDocument();
-    expect(screen.getByLabelText("Price (₹)")).toBeInTheDocument();
-    expect(screen.getByLabelText("Stock")).toBeInTheDocument();
-    expect(screen.getByLabelText("Image URL")).toBeInTheDocument();
+    expect(screen.getAllByText("Add New Sweet").length).toBeGreaterThan(0);
+    expect(screen.getByPlaceholderText("Sweet name")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Category")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Price")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Stock quantity")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Image URL")).toBeInTheDocument();
   });
 
   test("handles form input changes in add sweet modal", async () => {
     const user = userEvent.setup();
     renderWithRouter(<DashboardContent />);
 
-    // Open modal
     const addButton = screen.getByRole("button", { name: /add new sweet/i });
     await user.click(addButton);
 
-    // Fill form fields
-    const nameInput = screen.getByLabelText("Name");
-    const categoryInput = screen.getByLabelText("Category");
-    const priceInput = screen.getByLabelText("Price (₹)");
-    const stockInput = screen.getByLabelText("Stock");
-    const imageInput = screen.getByLabelText("Image URL");
+    const nameInput = screen.getByPlaceholderText("Sweet name");
+    const categoryInput = screen.getByPlaceholderText("Category");
+    const priceInput = screen.getByPlaceholderText("Price");
+    const stockInput = screen.getByPlaceholderText("Stock quantity");
+    const imageInput = screen.getByPlaceholderText("Image URL");
 
     await user.type(nameInput, "Jalebi");
     await user.type(categoryInput, "Traditional");
@@ -84,18 +98,21 @@ describe("DashboardContent - Add Sweet", () => {
     const user = userEvent.setup();
     renderWithRouter(<DashboardContent />);
 
-    // Open modal
     const addButton = screen.getByRole("button", { name: /add new sweet/i });
     await user.click(addButton);
 
-    expect(screen.getByText("Add New Sweet")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Sweet name")).toBeInTheDocument();
 
-    // Click cancel
-    const cancelButton = screen.getByRole("button", { name: /cancel/i });
+    const cancelButtons = screen.getAllByRole("button", { name: /cancel/i });
+    const cancelButton = cancelButtons.find(
+      (btn) => btn.textContent.toLowerCase() === "cancel"
+    );
     await user.click(cancelButton);
 
     await waitFor(() => {
-      expect(screen.queryByText("Add New Sweet")).not.toBeInTheDocument();
+      expect(
+        screen.queryByPlaceholderText("Sweet name")
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -115,7 +132,10 @@ describe("DashboardContent - Add Sweet", () => {
     await user.type(screen.getByLabelText("Category"), "Traditional");
     await user.type(screen.getByLabelText("Price (₹)"), "60");
     await user.type(screen.getByLabelText("Stock"), "50");
-    await user.type(screen.getByLabelText("Image URL"), "https://example.com/jalebi.jpg");
+    await user.type(
+      screen.getByLabelText("Image URL"),
+      "https://example.com/jalebi.jpg"
+    );
 
     // Submit form
     const submitButton = screen.getByRole("button", { name: /add sweet/i });
@@ -139,57 +159,60 @@ describe("DashboardContent - Add Sweet", () => {
     const user = userEvent.setup();
     renderWithRouter(<DashboardContent />);
 
-    // Open modal
     const addButton = screen.getByRole("button", { name: /add new sweet/i });
     await user.click(addButton);
 
-    // Fill and submit form
-    await user.type(screen.getByLabelText("Name"), "Jalebi");
-    await user.type(screen.getByLabelText("Category"), "Traditional");
-    await user.type(screen.getByLabelText("Price (₹)"), "60");
-    await user.type(screen.getByLabelText("Stock"), "50");
+    await user.type(screen.getByPlaceholderText("Sweet name"), "Jalebi");
+    await user.type(screen.getByPlaceholderText("Category"), "Traditional");
+    await user.type(screen.getByPlaceholderText("Price"), "60");
+    await user.type(screen.getByPlaceholderText("Stock quantity"), "50");
 
     const submitButton = screen.getByRole("button", { name: /add sweet/i });
     await user.click(submitButton);
 
-    // Wait for modal to close
     await waitFor(() => {
-      expect(screen.queryByText("Add New Sweet")).not.toBeInTheDocument();
+      expect(
+        screen.queryByPlaceholderText("Sweet name")
+      ).not.toBeInTheDocument();
     });
 
-    // Open modal again and verify form is reset
     await user.click(addButton);
 
-    expect(screen.getByLabelText("Name")).toHaveValue("");
-    expect(screen.getByLabelText("Category")).toHaveValue("");
-    expect(screen.getByLabelText("Price (₹)")).toHaveValue(null);
-    expect(screen.getByLabelText("Stock")).toHaveValue(null);
+    expect(screen.getByPlaceholderText("Sweet name")).toHaveValue("");
+    expect(screen.getByPlaceholderText("Category")).toHaveValue("");
+    expect(screen.getByPlaceholderText("Price")).toHaveValue(null);
+    expect(screen.getByPlaceholderText("Stock quantity")).toHaveValue(null);
   });
 
   test("converts price and stock to numbers when adding sweet", async () => {
+    sweetsService.createSweet.mockResolvedValueOnce({
+      id: 5,
+      name: "Barfi",
+      category: "Milk",
+      price: 70,
+      quantity: 30,
+      stock: 30,
+      image: "",
+    });
+
     const user = userEvent.setup();
     renderWithRouter(<DashboardContent />);
 
-    // Open modal
     const addButton = screen.getByRole("button", { name: /add new sweet/i });
     await user.click(addButton);
 
-    // Fill form with numeric values as strings
-    await user.type(screen.getByLabelText("Name"), "Barfi");
-    await user.type(screen.getByLabelText("Category"), "Milk");
-    await user.type(screen.getByLabelText("Price (₹)"), "70");
-    await user.type(screen.getByLabelText("Stock"), "30");
+    await user.type(screen.getByPlaceholderText("Sweet name"), "Barfi");
+    await user.type(screen.getByPlaceholderText("Category"), "Milk");
+    await user.type(screen.getByPlaceholderText("Price"), "70");
+    await user.type(screen.getByPlaceholderText("Stock quantity"), "30");
 
-    // Submit form
     const submitButton = screen.getByRole("button", { name: /add sweet/i });
     await user.click(submitButton);
 
-    // Wait for modal to close and sweet to appear
     await waitFor(() => {
       expect(screen.getByText("Barfi")).toBeInTheDocument();
     });
 
-    // Verify the values are displayed correctly (converted to numbers)
     expect(screen.getByText("₹70")).toBeInTheDocument();
     expect(screen.getByText("30")).toBeInTheDocument();
   });
@@ -198,59 +221,69 @@ describe("DashboardContent - Add Sweet", () => {
     const user = userEvent.setup();
     renderWithRouter(<DashboardContent />);
 
-    // Open modal
     const addButton = screen.getByRole("button", { name: /add new sweet/i });
     await user.click(addButton);
 
-    // Try to submit without filling form
     const submitButton = screen.getByRole("button", { name: /add sweet/i });
     await user.click(submitButton);
 
-    // Form should not submit (HTML5 validation prevents submission)
-    // Modal should still be visible
-    expect(screen.getByText("Add New Sweet")).toBeInTheDocument();
-
-    // Name field should be required
-    const nameInput = screen.getByLabelText("Name");
+    expect(screen.getByPlaceholderText("Sweet name")).toBeInTheDocument();
+    const nameInput = screen.getByPlaceholderText("Sweet name");
     expect(nameInput).toBeRequired();
   });
 
   test("multiple sweets can be added sequentially", async () => {
+    sweetsService.createSweet
+      .mockResolvedValueOnce({
+        id: 4,
+        name: "Jalebi",
+        category: "Traditional",
+        price: 60,
+        quantity: 50,
+        stock: 50,
+        image: "",
+      })
+      .mockResolvedValueOnce({
+        id: 5,
+        name: "Barfi",
+        category: "Milk",
+        price: 70,
+        quantity: 30,
+        stock: 30,
+        image: "",
+      });
+
     const user = userEvent.setup();
     renderWithRouter(<DashboardContent />);
 
-    // Add first sweet
     const addButton = screen.getByRole("button", { name: /add new sweet/i });
     await user.click(addButton);
 
-    await user.type(screen.getByLabelText("Name"), "Jalebi");
-    await user.type(screen.getByLabelText("Category"), "Traditional");
-    await user.type(screen.getByLabelText("Price (₹)"), "60");
-    await user.type(screen.getByLabelText("Stock"), "50");
+    await user.type(screen.getByPlaceholderText("Sweet name"), "Jalebi");
+    await user.type(screen.getByPlaceholderText("Category"), "Traditional");
+    await user.type(screen.getByPlaceholderText("Price"), "60");
+    await user.type(screen.getByPlaceholderText("Stock quantity"), "50");
 
     await user.click(screen.getByRole("button", { name: /add sweet/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText("Add New Sweet")).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText("Sweet name")).not.toBeInTheDocument();
     });
 
-    // Add second sweet
     await user.click(addButton);
 
-    await user.type(screen.getByLabelText("Name"), "Barfi");
-    await user.type(screen.getByLabelText("Category"), "Milk");
-    await user.type(screen.getByLabelText("Price (₹)"), "70");
-    await user.type(screen.getByLabelText("Stock"), "30");
+    await user.type(screen.getByPlaceholderText("Sweet name"), "Barfi");
+    await user.type(screen.getByPlaceholderText("Category"), "Milk");
+    await user.type(screen.getByPlaceholderText("Price"), "70");
+    await user.type(screen.getByPlaceholderText("Stock quantity"), "30");
 
     await user.click(screen.getByRole("button", { name: /add sweet/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText("Add New Sweet")).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText("Sweet name")).not.toBeInTheDocument();
     });
 
-    // Verify both sweets are in the list
     expect(screen.getByText("Jalebi")).toBeInTheDocument();
     expect(screen.getByText("Barfi")).toBeInTheDocument();
   });
 });
-
