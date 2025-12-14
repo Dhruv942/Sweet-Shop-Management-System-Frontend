@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { authService } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 import { sweetsService } from "../services/sweetsService";
@@ -36,13 +36,14 @@ const dummySweets = [
 
 function DashboardContent() {
   const navigate = useNavigate();
-  const [sweets, setSweets] = useState(dummySweets);
+  const [sweets, setSweets] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRestockModal, setShowRestockModal] = useState(false);
   const [selectedSweet, setSelectedSweet] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
@@ -51,6 +52,27 @@ function DashboardContent() {
     stock: "",
     image: "",
   });
+
+  useEffect(() => {
+    const fetchSweets = async () => {
+      try {
+        setFetchLoading(true);
+        const fetchedSweets = await sweetsService.getAllSweets();
+        const normalizedSweets = fetchedSweets.map((sweet) => ({
+          ...sweet,
+          stock: sweet.stock || sweet.quantity || 0,
+        }));
+        setSweets(normalizedSweets);
+      } catch (err) {
+        setError(err.message || "Failed to load sweets");
+        setSweets(dummySweets);
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+
+    fetchSweets();
+  }, []);
 
   const handleLogout = () => {
     authService.logout();
@@ -268,7 +290,14 @@ function DashboardContent() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/10">
-                {filteredSweets.map((sweet) => (
+                {fetchLoading ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-12 text-center text-gray-300">
+                      Loading sweets...
+                    </td>
+                  </tr>
+                ) : (
+                  filteredSweets.map((sweet) => (
                   <tr
                     key={sweet.id}
                     className="hover:bg-white/5 transition-colors"
@@ -321,10 +350,11 @@ function DashboardContent() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  ))
+                )}
               </tbody>
             </table>
-            {filteredSweets.length === 0 && (
+            {!fetchLoading && filteredSweets.length === 0 && (
               <div className="text-center py-12 text-gray-400">
                 No sweets found. Add your first sweet!
               </div>

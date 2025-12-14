@@ -4,13 +4,16 @@ import { API_ENDPOINTS, BASE_URL } from "../config/api";
 const apiService = new ApiService(BASE_URL);
 
 export const sweetsService = {
-  /**
-   * Get all sweets
-   * @returns {Promise<Array>}
-   */
   async getAllSweets() {
-    // TODO: API integration
-    return [];
+    try {
+      const endpoint = API_ENDPOINTS.SWEETS.GET_ALL.replace(BASE_URL, "");
+      const response = await apiService.get(endpoint);
+      return Array.isArray(response) ? response : [];
+    } catch (error) {
+      throw new Error(
+        error.message || "Failed to fetch sweets. Please try again."
+      );
+    }
   },
 
   /**
