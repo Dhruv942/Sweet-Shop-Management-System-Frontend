@@ -15,6 +15,7 @@ export const API_ENDPOINTS = {
     UPDATE: (id) => `${API_BASE_URL}/sweets/${id}`,
     DELETE: (id) => `${API_BASE_URL}/sweets/${id}`,
     RESTOCK: (id) => `${API_BASE_URL}/sweets/${id}/restock`,
+    PURCHASE: (id) => `${API_BASE_URL}/sweets/${id}/purchase`,
   },
 };
 

@@ -90,7 +90,9 @@ export const sweetsService = {
   async restockSweet(id, quantity) {
     try {
       const endpoint = API_ENDPOINTS.SWEETS.RESTOCK(id).replace(BASE_URL, "");
-      const response = await apiService.post(endpoint, { quantity: parseInt(quantity) });
+      const response = await apiService.post(endpoint, {
+        quantity: parseInt(quantity),
+      });
       return response;
     } catch (error) {
       throw new Error(
