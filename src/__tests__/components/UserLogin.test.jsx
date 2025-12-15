@@ -43,7 +43,9 @@ describe("UserLogin Component", () => {
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Email Address")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /sign in/i })
+    ).toBeInTheDocument();
   });
 
   test("handles email and password input changes", async () => {
@@ -148,4 +150,3 @@ describe("UserLogin Component", () => {
     expect(submitButton).toBeDisabled();
   });
 });
-

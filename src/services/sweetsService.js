@@ -104,12 +104,15 @@ export const sweetsService = {
   /**
    * Purchase sweet
    * @param {string} id - Sweet ID
+   * @param {number} quantity - Quantity to purchase
    * @returns {Promise<object>}
    */
-  async purchaseSweet(id) {
+  async purchaseSweet(id, quantity) {
     try {
       const endpoint = API_ENDPOINTS.SWEETS.PURCHASE(id).replace(BASE_URL, "");
-      const response = await apiService.post(endpoint, {});
+      const response = await apiService.post(endpoint, {
+        quantity: parseInt(quantity),
+      });
       return response;
     } catch (error) {
       throw new Error(

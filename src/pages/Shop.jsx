@@ -6,6 +6,7 @@ function Shop() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [quantities, setQuantities] = useState({});
 
   useEffect(() => {
     fetchSweets();
@@ -21,6 +22,11 @@ function Shop() {
         stock: sweet.quantity !== undefined ? sweet.quantity : sweet.stock,
       }));
       setSweets(normalizedSweets);
+      const initialQuantities = {};
+      normalizedSweets.forEach((sweet) => {
+        initialQuantities[sweet.id] = 1;
+      });
+      setQuantities(initialQuantities);
     } catch (err) {
       setError(err.message || "Failed to fetch sweets. Please try again.");
     } finally {
@@ -28,11 +34,21 @@ function Shop() {
     }
   };
 
+  const handleQuantityChange = (id, value) => {
+    const numValue = parseInt(value) || 1;
+    if (numValue < 1) return;
+    setQuantities({
+      ...quantities,
+      [id]: numValue,
+    });
+  };
+
   const handlePurchase = async (id) => {
     setError("");
     setSuccessMessage("");
+    const quantity = quantities[id] || 1;
     try {
-      const purchasedSweet = await sweetsService.purchaseSweet(id);
+      const purchasedSweet = await sweetsService.purchaseSweet(id, quantity);
       const normalizedSweet = {
         ...purchasedSweet,
         stock:
@@ -164,9 +180,21 @@ function Shop() {
                       ₹{sweet.price}
                     </span>
                   </div>
+                  <div className="flex items-center gap-2 mt-4">
+                    <label className="text-gray-300 text-sm">Quantity:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={sweet.stock || 999}
+                      value={quantities[sweet.id] || 1}
+                      onChange={(e) => handleQuantityChange(sweet.id, e.target.value)}
+                      className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-center focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
                   <button
                     onClick={() => handlePurchase(sweet.id)}
-                    className="w-full mt-4 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    disabled={!quantities[sweet.id] || quantities[sweet.id] < 1 || (sweet.stock && quantities[sweet.id] > sweet.stock)}
+                    className="w-full mt-2 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     Buy Now
                   </button>
