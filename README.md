@@ -59,6 +59,10 @@ Run tests with coverage:
 npm run test:coverage
 ```
 
+### Test Cases
+
+![Test Cases](./images/testcases.png)
+
 ### Test Files
 
 The project includes the following test files:
