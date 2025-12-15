@@ -86,7 +86,7 @@ describe("Shop - Purchase Sweet", () => {
     await user.click(buyButtons[0]);
 
     await waitFor(() => {
-      expect(sweetsService.purchaseSweet).toHaveBeenCalledWith(1);
+      expect(sweetsService.purchaseSweet).toHaveBeenCalledWith(1, 1);
     });
   });
 

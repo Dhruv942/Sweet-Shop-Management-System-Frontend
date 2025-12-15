@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router-dom";
 import Shop from "../../pages/Shop";
@@ -58,24 +58,22 @@ describe("Shop - Purchase Sweet with Quantity", () => {
       expect(screen.getByText("Gulab Jamun")).toBeInTheDocument();
     });
 
-    const quantityInputs = screen.getAllByLabelText(/quantity/i);
+    const quantityInputs = screen.getAllByRole("spinbutton");
     expect(quantityInputs.length).toBeGreaterThan(0);
     expect(quantityInputs[0]).toHaveValue(1);
   });
 
   test("allows user to change quantity", async () => {
-    const user = userEvent.setup();
     renderWithRouter(<Shop />);
 
     await waitFor(() => {
       expect(screen.getByText("Gulab Jamun")).toBeInTheDocument();
     });
 
-    const quantityInputs = screen.getAllByLabelText(/quantity/i);
+    const quantityInputs = screen.getAllByRole("spinbutton");
     const firstInput = quantityInputs[0];
 
-    await user.clear(firstInput);
-    await user.type(firstInput, "5");
+    fireEvent.change(firstInput, { target: { value: "5" } });
 
     expect(firstInput).toHaveValue(5);
   });
@@ -100,11 +98,10 @@ describe("Shop - Purchase Sweet with Quantity", () => {
       expect(screen.getByText("Gulab Jamun")).toBeInTheDocument();
     });
 
-    const quantityInputs = screen.getAllByLabelText(/quantity/i);
+    const quantityInputs = screen.getAllByRole("spinbutton");
     const firstInput = quantityInputs[0];
 
-    await user.clear(firstInput);
-    await user.type(firstInput, "5");
+    fireEvent.change(firstInput, { target: { value: "5" } });
 
     const buyButtons = screen.getAllByRole("button", { name: /buy/i });
     await user.click(buyButtons[0]);
@@ -150,7 +147,7 @@ describe("Shop - Purchase Sweet with Quantity", () => {
       expect(screen.getByText("Gulab Jamun")).toBeInTheDocument();
     });
 
-    const quantityInputs = screen.getAllByLabelText(/quantity/i);
+    const quantityInputs = screen.getAllByRole("spinbutton");
     const firstInput = quantityInputs[0];
 
     await user.clear(firstInput);
@@ -161,21 +158,21 @@ describe("Shop - Purchase Sweet with Quantity", () => {
   });
 
   test("disables Buy button when quantity is less than 1", async () => {
-    const user = userEvent.setup();
     renderWithRouter(<Shop />);
 
     await waitFor(() => {
       expect(screen.getByText("Gulab Jamun")).toBeInTheDocument();
     });
 
-    const quantityInputs = screen.getAllByLabelText(/quantity/i);
+    const quantityInputs = screen.getAllByRole("spinbutton");
     const firstInput = quantityInputs[0];
 
-    await user.clear(firstInput);
-    await user.type(firstInput, "0");
+    fireEvent.change(firstInput, { target: { value: "0" } });
 
-    const buyButtons = screen.getAllByRole("button", { name: /buy/i });
-    expect(buyButtons[0]).toBeDisabled();
+    await waitFor(() => {
+      const buyButtons = screen.getAllByRole("button", { name: /buy/i });
+      expect(buyButtons[0]).toBeDisabled();
+    });
   });
 
   test("updates sweet stock correctly after purchase with quantity", async () => {
@@ -199,11 +196,10 @@ describe("Shop - Purchase Sweet with Quantity", () => {
       expect(screen.getByText("100")).toBeInTheDocument();
     });
 
-    const quantityInputs = screen.getAllByLabelText(/quantity/i);
+    const quantityInputs = screen.getAllByRole("spinbutton");
     const firstInput = quantityInputs[0];
 
-    await user.clear(firstInput);
-    await user.type(firstInput, "5");
+    fireEvent.change(firstInput, { target: { value: "5" } });
 
     const buyButtons = screen.getAllByRole("button", { name: /buy/i });
     await user.click(buyButtons[0]);
@@ -234,11 +230,10 @@ describe("Shop - Purchase Sweet with Quantity", () => {
       expect(screen.getByText("Gulab Jamun")).toBeInTheDocument();
     });
 
-    const quantityInputs = screen.getAllByLabelText(/quantity/i);
+    const quantityInputs = screen.getAllByRole("spinbutton");
     const firstInput = quantityInputs[0];
 
-    await user.clear(firstInput);
-    await user.type(firstInput, "5");
+    fireEvent.change(firstInput, { target: { value: "5" } });
 
     const buyButtons = screen.getAllByRole("button", { name: /buy/i });
     await user.click(buyButtons[0]);
@@ -260,11 +255,10 @@ describe("Shop - Purchase Sweet with Quantity", () => {
       expect(screen.getByText("Gulab Jamun")).toBeInTheDocument();
     });
 
-    const quantityInputs = screen.getAllByLabelText(/quantity/i);
+    const quantityInputs = screen.getAllByRole("spinbutton");
     const firstInput = quantityInputs[0];
 
-    await user.clear(firstInput);
-    await user.type(firstInput, "10");
+    fireEvent.change(firstInput, { target: { value: "10" } });
 
     const buyButtons = screen.getAllByRole("button", { name: /buy/i });
     await user.click(buyButtons[0]);

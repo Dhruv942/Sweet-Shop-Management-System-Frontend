@@ -35,8 +35,28 @@ function Shop() {
   };
 
   const handleQuantityChange = (id, value) => {
-    const numValue = parseInt(value) || 1;
-    if (numValue < 1) return;
+    if (value === "" || value === null || value === undefined) {
+      setQuantities({
+        ...quantities,
+        [id]: 1,
+      });
+      return;
+    }
+    const numValue = parseInt(value);
+    if (isNaN(numValue)) {
+      setQuantities({
+        ...quantities,
+        [id]: 1,
+      });
+      return;
+    }
+    if (numValue < 0) {
+      setQuantities({
+        ...quantities,
+        [id]: 0,
+      });
+      return;
+    }
     setQuantities({
       ...quantities,
       [id]: numValue,
@@ -49,17 +69,21 @@ function Shop() {
     const quantity = quantities[id] || 1;
     try {
       const purchasedSweet = await sweetsService.purchaseSweet(id, quantity);
-      const normalizedSweet = {
-        ...purchasedSweet,
-        stock:
-          purchasedSweet.quantity !== undefined
-            ? purchasedSweet.quantity
-            : purchasedSweet.stock,
-      };
+      const updatedStock = purchasedSweet.quantity !== undefined
+        ? purchasedSweet.quantity
+        : purchasedSweet.stock;
+      
       setSweets(
-        sweets.map((sweet) =>
-          sweet.id === id ? normalizedSweet : sweet
-        )
+        sweets.map((sweet) => {
+          if (sweet.id === id) {
+            return {
+              ...sweet,
+              stock: updatedStock,
+              quantity: updatedStock,
+            };
+          }
+          return sweet;
+        })
       );
       setSuccessMessage("Purchase successful! Thank you for your order.");
       setTimeout(() => {
@@ -181,8 +205,9 @@ function Shop() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-4">
-                    <label className="text-gray-300 text-sm">Quantity:</label>
+                    <label htmlFor={`quantity-${sweet.id}`} className="text-gray-300 text-sm">Quantity:</label>
                     <input
+                      id={`quantity-${sweet.id}`}
                       type="number"
                       min="1"
                       max={sweet.stock || 999}
@@ -193,7 +218,7 @@ function Shop() {
                   </div>
                   <button
                     onClick={() => handlePurchase(sweet.id)}
-                    disabled={!quantities[sweet.id] || quantities[sweet.id] < 1 || (sweet.stock && quantities[sweet.id] > sweet.stock)}
+                    disabled={!quantities[sweet.id] || quantities[sweet.id] < 1 || (sweet.stock !== undefined && sweet.stock !== null && quantities[sweet.id] > sweet.stock)}
                     className="w-full mt-2 py-3 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                   >
                     Buy Now
